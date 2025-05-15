@@ -29,7 +29,7 @@ def correr_eyetracker(is_running):
                     ###
                     if screen_x>center_x:
                         screen_x= screen_x+(screen_x-center_x)
-                    if screen_x>center_x:
+                    if screen_x<center_x:
                         screen_x= screen_x-(center_x-screen_x) 
                     if screen_y>center_y:
                         screen_y= screen_y+(screen_y-center_y) 
