@@ -6,6 +6,7 @@ import pygame
 import filtro
 import sys
 from PyQt5 import QtWidgets, QtCore
+import keyboard
 
 qt_overlay = None
 qt_app = None
@@ -121,6 +122,15 @@ def activar_eyetracker(event=None):
         start_button.config(text="Start")
 
         stop_qt_overlay()
+
+def listen_global_hotkey():
+    # This blocks forever listening for Ctrl+Alt+2 globally
+    keyboard.add_hotkey('ctrl+alt+2', lambda: root.after(0, activar_eyetracker))
+    keyboard.wait()  # Keeps the listener running
+
+# Start the hotkey listener in a separate daemon thread
+hotkey_thread = threading.Thread(target=listen_global_hotkey, daemon=True)
+hotkey_thread.start()
 
 root = tk.Tk()
 root.title("Ayudador de Lectura")
