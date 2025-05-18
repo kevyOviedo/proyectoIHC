@@ -7,10 +7,12 @@ import filtro
 import sys
 from PyQt5 import QtWidgets, QtCore
 import keyboard
+import time
 
 qt_overlay = None
 qt_app = None
 
+timer_inicio = None
 
 running = False
 thread = None
@@ -107,10 +109,11 @@ def correr_eyetracker():
             break
 
 def activar_eyetracker(event=None):
-    global running, thread, start_button, qt_overlay, qt_app
+    global running, thread, start_button, qt_overlay, qt_app, timer_inicio
     if not running:
         running = True
         start_button.config(text="Stop")
+        timer_inicio = time.time() #empieza timer
 
         qt_thread = threading.Thread(target=run_qt_overlay, daemon=True)
         qt_thread.start()
@@ -121,24 +124,36 @@ def activar_eyetracker(event=None):
         running = False
         start_button.config(text="Start")
 
+        tiempo_transcurrido = time.time() - timer_inicio if timer_inicio else 0
+        
+        t=int(tiempo_transcurrido)
+        m = t//60
+        s = t % 60 
+
+        tiempo_texto.config(text=f"{m}:{s}s")
+        
         stop_qt_overlay()
 
 def listen_global_hotkey():
-    # This blocks forever listening for Ctrl+Alt+2 globally
     keyboard.add_hotkey('ctrl+alt+2', lambda: root.after(0, activar_eyetracker))
-    keyboard.wait()  # Keeps the listener running
+    keyboard.wait()  
 
-# Start the hotkey listener in a separate daemon thread
 hotkey_thread = threading.Thread(target=listen_global_hotkey, daemon=True)
 hotkey_thread.start()
 
+
+## AQUI TKINTER
 root = tk.Tk()
 root.title("Ayudador de Lectura")
-root.geometry("250x100") 
+root.geometry("450x450") 
 
 start_button = tk.Button(root, text="Start", command=activar_eyetracker)
+start_button.pack(pady=(50, 10))
 
-start_button.pack(expand=True)
+texto1 = tk.Label(root, text="Duracion de la mas reciente sesion: ")
+texto1.pack()
 
-# Start the GUI event loop
+tiempo_texto = tk.Label(root,text="-----")
+tiempo_texto.pack()
+
 root.mainloop()
