@@ -3,10 +3,25 @@ import eyetracker
 import threading
 from PIL import Image, ImageTk
 import pygame
+import filtro
+import sys
+from PyQt5 import QtWidgets, QtCore
+
+qt_overlay = None
+qt_app = None
+
 
 running = False
 thread = None
 alerta_ventana=None
+
+def run_qt_overlay():
+    global qt_overlay, qt_app
+    qt_app = QtWidgets.QApplication(sys.argv)
+    qt_overlay = filtro.StaticOverlay()
+    qt_overlay.showFullScreen()
+    qt_app.exec_()
+
 
 
 def hacer_alerta():
@@ -56,10 +71,28 @@ def cerrar_alerta():
         pygame.mixer.music.stop()
         globals()['alerta_ventana'] = None
 
+def stop_qt_overlay():
+    global qt_overlay, qt_app
+    if qt_overlay:
+        QtCore.QMetaObject.invokeMethod(qt_overlay, "close", QtCore.Qt.QueuedConnection)
+    if qt_app:
+        QtCore.QMetaObject.invokeMethod(qt_app, "quit", QtCore.Qt.QueuedConnection)
+
 def correr_eyetracker():
     flag = None
     for data in eyetracker.correr_eyetracker(lambda:running):
         print("datos:", data)
+        
+
+        if qt_overlay:
+            QtCore.QMetaObject.invokeMethod(
+                qt_overlay, "update_eye_pos",
+                QtCore.Qt.QueuedConnection,
+                QtCore.Q_ARG(float, data[0]),
+                QtCore.Q_ARG(float, data[1])
+            )    
+
+
         if (data[0] == -1 or data[0]<20 or data[0]>1900) and flag != 1:
             root.after(0, hacer_alerta)
             flag=1
@@ -72,22 +105,29 @@ def correr_eyetracker():
         if not running:
             break
 
-def activar_eyetracker():
-    global running, thread, start_button
+def activar_eyetracker(event=None):
+    global running, thread, start_button, qt_overlay, qt_app
     if not running:
         running = True
         start_button.config(text="Stop")
+
+        qt_thread = threading.Thread(target=run_qt_overlay, daemon=True)
+        qt_thread.start()
+
         thread = threading.Thread(target=correr_eyetracker, daemon=True)
         thread.start()
     else:
         running = False
         start_button.config(text="Start")
 
+        stop_qt_overlay()
+
 root = tk.Tk()
 root.title("Ayudador de Lectura")
 root.geometry("250x100") 
 
 start_button = tk.Button(root, text="Start", command=activar_eyetracker)
+
 start_button.pack(expand=True)
 
 # Start the GUI event loop
