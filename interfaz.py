@@ -13,6 +13,7 @@ qt_overlay = None
 qt_app = None
 
 timer_inicio = None
+tiempo_total = 0
 
 running = False
 thread = None
@@ -39,7 +40,7 @@ def hacer_alerta():
     alerta_ventana.attributes("-topmost", True)
     alerta_ventana.geometry("+850+200")
 
-    img = Image.open("character.png").resize((240, 240))
+    img = Image.open("mono.png").resize((240, 240))
     tk_img = ImageTk.PhotoImage(img)
 
     canvas = tk.Canvas(alerta_ventana, width=250, height=250, highlightthickness=0, bg="yellow")
@@ -108,11 +109,13 @@ def correr_eyetracker():
         if not running:
             break
 
+##############################################################
+
 def activar_eyetracker(event=None):
-    global running, thread, start_button, qt_overlay, qt_app, timer_inicio
+    global running, thread, start_button, qt_overlay, qt_app, timer_inicio, tiempo_total
     if not running:
         running = True
-        start_button.config(text="Stop")
+        start_button.config(text="Stop", bg="red")
         timer_inicio = time.time() #empieza timer
 
         qt_thread = threading.Thread(target=run_qt_overlay, daemon=True)
@@ -122,16 +125,21 @@ def activar_eyetracker(event=None):
         thread.start()
     else:
         running = False
-        start_button.config(text="Start")
+        start_button.config(text="Start", bg="green")
 
         tiempo_transcurrido = time.time() - timer_inicio if timer_inicio else 0
+        tiempo_total = tiempo_total + tiempo_transcurrido
         
         t=int(tiempo_transcurrido)
         m = t//60
         s = t % 60 
-
-        tiempo_texto.config(text=f"{m}:{s}s")
+        tiempo_reciente.config(text=f"Duracion de la mas reciente sesion = {m}:{s}")
         
+        t=int(tiempo_total)
+        m = t//60
+        s = t % 60 
+        tiempo_total_texto.config(text=f"Tiempo total de lectura =  {m}:{s}")
+
         stop_qt_overlay()
 
 def listen_global_hotkey():
@@ -143,17 +151,20 @@ hotkey_thread.start()
 
 
 ## AQUI TKINTER
-root = tk.Tk()
-root.title("Ayudador de Lectura")
-root.geometry("450x450") 
+root = tk.Tk() # Inicializar ventana tkinter
+root.title("Ayudador de Lectura") # Nombre de ventana
+root.geometry("450x450")  # tamaño de ventana
 
-start_button = tk.Button(root, text="Start", command=activar_eyetracker)
+# Boton para activar/desactivar el eyetracker
+start_button = tk.Button(root, text="Start", command=activar_eyetracker, bg="green")
 start_button.pack(pady=(50, 10))
 
-texto1 = tk.Label(root, text="Duracion de la mas reciente sesion: ")
-texto1.pack()
+# Texto 1
+tiempo_reciente = tk.Label(root, text="Duracion de la mas reciente sesion = ...")
+tiempo_reciente.pack()
 
-tiempo_texto = tk.Label(root,text="-----")
-tiempo_texto.pack()
+# Texto del tiempo (se actualiza despues de usar el eyetracker)
+tiempo_total_texto = tk.Label(root,text="Tiempo total de lectura = ...")
+tiempo_total_texto.pack(pady=(10, 10))
 
 root.mainloop()
