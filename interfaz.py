@@ -1,4 +1,6 @@
 import tkinter as tk
+from tkinter import *
+from tkinter import ttk
 import eyetracker
 import threading
 from PIL import Image, ImageTk
@@ -8,6 +10,13 @@ import sys
 from PyQt5 import QtWidgets, QtCore
 import keyboard
 import time
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
+
+datos_eyetracker_x = []
+datos_eyetracker_y = []
+sin_mirar = 0
 
 qt_overlay = None
 qt_app = None
@@ -83,10 +92,18 @@ def stop_qt_overlay():
         QtCore.QMetaObject.invokeMethod(qt_app, "quit", QtCore.Qt.QueuedConnection)
 
 def correr_eyetracker():
+    global datos_eyetracker_x
+    global datos_eyetracker_y
+    global sin_mirar
     flag = None
     for data in eyetracker.correr_eyetracker(lambda:running):
         print("datos:", data)
         
+        if(data[0]!=-1):
+            datos_eyetracker_x.append(data[0])
+            datos_eyetracker_y.append(data[1])
+        else:
+            sin_mirar = sin_mirar+1
 
         if qt_overlay:
             QtCore.QMetaObject.invokeMethod(
@@ -142,11 +159,50 @@ def activar_eyetracker(event=None):
 
         stop_qt_overlay()
 
-def listen_global_hotkey():
+def listen_hotkey():
     keyboard.add_hotkey('ctrl+alt+2', lambda: root.after(0, activar_eyetracker))
     keyboard.wait()  
 
-hotkey_thread = threading.Thread(target=listen_global_hotkey, daemon=True)
+def graficar():
+    global datos_eyetracker_x, datos_eyetracker_y, sin_mirar
+    gaze_x = datos_eyetracker_x
+    gaze_y = datos_eyetracker_y
+
+    porcentaje_sin_mirar = sin_mirar/(sin_mirar+len(datos_eyetracker_x[0]))
+    tiempo_sin_mirar = (tiempo_total*porcentaje_sin_mirar)/100
+
+    screen_width = 1920
+    screen_height = 1080
+
+    heatmap, xedges, yedges = np.histogram2d(gaze_x, gaze_y, bins=[192, 108], range=[[0, screen_width], [0, screen_height]])
+
+    heatmap = gaussian_filter(heatmap, sigma=3)
+
+    plt.imshow(
+        heatmap.T,        
+        origin='lower',   
+        cmap='jet',       
+        extent=[0, screen_width, 0, screen_height]
+    )
+    plt.title('Heatmap eyetracking')
+
+    #s_no = int(tiempo_sin_mirar) % 60
+    #m_no = int(tiempo_sin_mirar) // 60
+    #s_t = int(tiempo_total) % 60
+    #m_t = int(tiempo_total) // 60
+    plt.ylabel(f'Miraste la pantalla un {100-tiempo_sin_mirar}% del tiempo')
+    plt.show()
+
+def hacerGrafica():
+    global datos_eyetracker_x, datos_eyetracker_y
+    if len(datos_eyetracker_x) > 1:
+        texto_grafica.config(text="")
+        graficar()
+    else:
+        texto_grafica.config(text=f"No hay datos para graficar!")
+        
+
+hotkey_thread = threading.Thread(target=listen_hotkey, daemon=True)
 hotkey_thread.start()
 
 
@@ -155,16 +211,45 @@ root = tk.Tk() # Inicializar ventana tkinter
 root.title("Ayudador de Lectura") # Nombre de ventana
 root.geometry("450x450")  # tamaño de ventana
 
+## para tabs
+tabControl = ttk.Notebook(root)
+
+tab1 = ttk.Frame(tabControl)
+tab2 = ttk.Frame(tabControl)
+tab3 = ttk.Frame(tabControl)
+
+tabControl.add(tab1, text='Inicio')
+tabControl.add(tab2, text='Datos')
+tabControl.add(tab3, text='Info')
+
+tabControl.pack(expand=1, fill="both")
+
+###
+# TAB 1
+###
+
 # Boton para activar/desactivar el eyetracker
-start_button = tk.Button(root, text="Start", command=activar_eyetracker, bg="green")
+start_button = tk.Button(tab1, text="Start", command=activar_eyetracker, bg="green")
 start_button.pack(pady=(50, 10))
-
 # Texto 1
-tiempo_reciente = tk.Label(root, text="Duracion de la mas reciente sesion = ...")
+tiempo_reciente = tk.Label(tab1, text="Duracion de la mas reciente sesion = ...")
 tiempo_reciente.pack()
-
 # Texto del tiempo (se actualiza despues de usar el eyetracker)
-tiempo_total_texto = tk.Label(root,text="Tiempo total de lectura = ...")
+tiempo_total_texto = tk.Label(tab1,text="Tiempo total de lectura = ...")
 tiempo_total_texto.pack(pady=(10, 10))
+
+###
+# TAB 2
+###
+
+button_grafica = Button(tab2, text="Graficar", command=hacerGrafica)
+button_grafica.pack(pady=(50, 10))
+
+texto_grafica = tk.Label(tab2, text="")
+texto_grafica.pack()
+
+###
+# TAB 3
+###
 
 root.mainloop()
