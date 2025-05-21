@@ -12,7 +12,10 @@ import keyboard
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from scipy.ndimage import gaussian_filter
+
+matplotlib.use('TkAgg')
 
 datos_eyetracker_x = []
 datos_eyetracker_y = []
@@ -168,7 +171,7 @@ def graficar():
     gaze_x = datos_eyetracker_x
     gaze_y = datos_eyetracker_y
 
-    porcentaje_sin_mirar = sin_mirar/(sin_mirar+len(datos_eyetracker_x[0]))
+    porcentaje_sin_mirar = sin_mirar/(sin_mirar+len(datos_eyetracker_x))
     tiempo_sin_mirar = (tiempo_total*porcentaje_sin_mirar)/100
 
     screen_width = 1920
@@ -185,12 +188,12 @@ def graficar():
         extent=[0, screen_width, 0, screen_height]
     )
     plt.title('Heatmap eyetracking')
-
+    
     #s_no = int(tiempo_sin_mirar) % 60
     #m_no = int(tiempo_sin_mirar) // 60
     #s_t = int(tiempo_total) % 60
     #m_t = int(tiempo_total) // 60
-    plt.ylabel(f'Miraste la pantalla un {100-tiempo_sin_mirar}% del tiempo')
+    plt.xlabel(f'Miraste la pantalla un {100-tiempo_sin_mirar}% del tiempo')
     plt.show()
 
 def hacerGrafica():
@@ -209,7 +212,7 @@ hotkey_thread.start()
 ## AQUI TKINTER
 root = tk.Tk() # Inicializar ventana tkinter
 root.title("Ayudador de Lectura") # Nombre de ventana
-root.geometry("450x450")  # tamaño de ventana
+root.geometry("550x550")  # tamaño de ventana
 
 ## para tabs
 tabControl = ttk.Notebook(root)
@@ -251,5 +254,11 @@ texto_grafica.pack()
 ###
 # TAB 3
 ###
+texto_info = tk.Label(tab3,text="Programa para ayudar con la lectura")
+texto_info.pack(pady=(10, 10))
+texto_info1 = tk.Label(tab3,text="Ctrl+Alt+2 para empezar o con el boton de Start")
+texto_info1.pack(pady=(10, 10))
+texto_info = tk.Label(tab3,text='Presiona boton en "Datos" para visualizar rersultados de lectura')
+texto_info.pack(pady=(10, 10))
 
 root.mainloop()
