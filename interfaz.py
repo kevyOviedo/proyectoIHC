@@ -61,7 +61,7 @@ def hacer_alerta():
     canvas.create_image(8, 20, anchor="nw", image=tk_img)
     canvas.image = tk_img 
 
-    canvas.create_text(125, 25, text="ESTO ES UN TEXTO", font=("Arial", 12))
+    canvas.create_text(125, 25, text="!!!!!!!!!!!", font=("Arial", 12))
 
     def play_sound():
         pygame.mixer.init()
@@ -140,6 +140,7 @@ def activar_eyetracker(event=None):
 
         qt_thread = threading.Thread(target=run_qt_overlay, daemon=True)
         qt_thread.start()
+        
 
         thread = threading.Thread(target=correr_eyetracker, daemon=True)
         thread.start()
@@ -213,52 +214,95 @@ hotkey_thread.start()
 root = tk.Tk() # Inicializar ventana tkinter
 root.title("Ayudador de Lectura") # Nombre de ventana
 root.geometry("550x550")  # tamaño de ventana
+root.configure(bg="#e8edf1") 
+
+# Estilo visual profesional
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("TNotebook.Tab", font=('Segoe UI', 11, 'bold'), padding=10)
+style.configure("TButton", font=('Segoe UI', 10), background="#1f2937", foreground="white")
+style.map("TButton", background=[("active", "#111827")])
+style.configure("TLabel", font=('Segoe UI', 10), background="#e8edf1")
+style.configure("Info.TFrame", background="#e8edf1")
+style.configure("Main.TFrame", background="#f0f2f5")
+style.configure("Datos.TFrame", background="#ffffff")
+#######
 
 ## para tabs
 tabControl = ttk.Notebook(root)
 
-tab1 = ttk.Frame(tabControl)
-tab2 = ttk.Frame(tabControl)
-tab3 = ttk.Frame(tabControl)
+tab1 = ttk.Frame(tabControl, style="Info.TFrame")
+tab2 = ttk.Frame(tabControl, style="Main.TFrame")
+tab3 = ttk.Frame(tabControl, style="Datos.TFrame")
 
-tabControl.add(tab1, text='Inicio')
-tabControl.add(tab2, text='Datos')
-tabControl.add(tab3, text='Info')
+tabControl.add(tab1, text='Info')
+tabControl.add(tab2, text='Main')
+tabControl.add(tab3, text='Datos')
 
 tabControl.pack(expand=1, fill="both")
 
 ###
 # TAB 1
 ###
+frame_info = ttk.Frame(tab1, padding=15, style="Info.TFrame")
+frame_info.pack(fill=tk.BOTH, expand=True)
 
-# Boton para activar/desactivar el eyetracker
-start_button = tk.Button(tab1, text="Start", command=activar_eyetracker, bg="green")
-start_button.pack(pady=(50, 10))
-# Texto 1
-tiempo_reciente = tk.Label(tab1, text="Duracion de la mas reciente sesion = ...")
-tiempo_reciente.pack()
-# Texto del tiempo (se actualiza despues de usar el eyetracker)
-tiempo_total_texto = tk.Label(tab1,text="Tiempo total de lectura = ...")
-tiempo_total_texto.pack(pady=(10, 10))
+bienvenida = ttk.Label(frame_info, text="Bienvenido al ayudador de lectura", font=('Segoe UI', 12, 'bold'))
+bienvenida.pack(pady=5)
+
+instrucciones = (
+    "Este sistema utiliza un eyetracker para detectar si el usuario se encuentra \ndistraído mientras lee.\n\n"
+    "Instrucciones:\n"
+    "• Abre un documento pdf o material de lectura.\n"
+    "• Ajustar el material de lectura para que quede en el centro.\n"
+    "• Mover esta ventana para que no bloquee el texto.\n"
+    "• Ajusta tu camara al nivel de tus ojos.\n"
+    "• Activar el programa desde la tab Main.\n"
+    "• Al salir una alerta, debes ajustar la posición de tu cabeza o camara.\n"
+)
+texto_instrucciones = ttk.Label(frame_info, text=instrucciones, font=('Segoe UI', 8), justify=tk.LEFT)
+texto_instrucciones.pack(pady=2)
+
+notas_adicionales = (
+    "Notas adicionales:\n\n"
+    "1. Puedes visualizar resultados de tu lectura en la tab Datos.\n"
+    "2. Se puede seguir utilizando el mouse y teclado \n"
+    '3. Programa puede ser activado y desactivado con "Ctrl+Alt+2" \n'
+)
+notas_adicionales = ttk.Label(frame_info, text=notas_adicionales, font=('Segoe UI', 8), justify=tk.CENTER, foreground="#333")
+notas_adicionales.pack(pady=1)
 
 ###
 # TAB 2
 ###
 
-button_grafica = Button(tab2, text="Graficar", command=hacerGrafica)
-button_grafica.pack(pady=(50, 10))
+frame_main = ttk.Frame(tab2, padding=10, style="Main.TFrame")
+frame_main.pack(fill=tk.BOTH, expand=True)
 
-texto_grafica = tk.Label(tab2, text="")
-texto_grafica.pack()
+# Boton para activar/desactivar el eyetracker
+start_button = tk.Button(frame_main, text="Start", command=activar_eyetracker, bg="green")
+start_button.pack(pady=(20, 10))
+# Texto 1
+tiempo_reciente = tk.Label(frame_main, text="Duracion de la más reciente sesion = ...")
+tiempo_reciente.pack()
+# Texto del tiempo (se actualiza despues de usar el eyetracker)
+tiempo_total_texto = tk.Label(frame_main,text="Tiempo total de lectura = ...")
+tiempo_total_texto.pack(pady=(10, 10))
 
 ###
 # TAB 3
 ###
-texto_info = tk.Label(tab3,text="Programa para ayudar con la lectura")
-texto_info.pack(pady=(10, 10))
-texto_info1 = tk.Label(tab3,text="Ctrl+Alt+2 para empezar o con el boton de Start")
-texto_info1.pack(pady=(10, 10))
-texto_info = tk.Label(tab3,text='Presiona boton en "Datos" para visualizar rersultados de lectura')
-texto_info.pack(pady=(10, 10))
+frame_datos = ttk.Frame(tab3, padding=10, style="Datos.TFrame")
+frame_datos.pack(fill=tk.BOTH, expand=True)
+
+button_grafica = Button(frame_datos, text="Graficar", command=hacerGrafica)
+button_grafica.pack(pady=(50, 10))
+
+texto_grafica = tk.Label(frame_datos, text="")
+texto_grafica.pack()
 
 root.mainloop()
+if qt_overlay:
+    QtCore.QMetaObject.invokeMethod(qt_overlay, "close", QtCore.Qt.QueuedConnection)
+if qt_app:
+    QtCore.QMetaObject.invokeMethod(qt_app, "quit", QtCore.Qt.QueuedConnection)

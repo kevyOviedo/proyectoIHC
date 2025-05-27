@@ -18,7 +18,7 @@ class StaticOverlay(QtWidgets.QWidget):
         self.width_, self.height_ = self.size().width(), self.size().height()
 
         self.circle_pos = QtCore.QPoint(self.width_ // 2, self.height_ // 2)
-        self.radius = 300
+        self.radius = 400
         self.fade = 50
 
         self.static_img = QtGui.QImage()
