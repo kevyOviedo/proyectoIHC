@@ -30,6 +30,7 @@ tiempo_total = 0
 running = False
 thread = None
 alerta_ventana=None
+comando_ventana=None
 
 def run_qt_overlay():
     global qt_overlay, qt_app
@@ -90,9 +91,44 @@ def cerrar_alerta():
 def stop_qt_overlay():
     global qt_overlay, qt_app
     if qt_overlay:
+        print("cerrando overlay")
         QtCore.QMetaObject.invokeMethod(qt_overlay, "close", QtCore.Qt.QueuedConnection)
     if qt_app:
+        print("cerrando QT APP")
         QtCore.QMetaObject.invokeMethod(qt_app, "quit", QtCore.Qt.QueuedConnection)
+
+
+def mostrar_comando():
+
+    global comando_ventana
+
+    if comando_ventana is not None:
+        return
+
+    comando_ventana = tk.Toplevel()
+    comando_ventana.overrideredirect(True)
+    comando_ventana.attributes("-topmost", True)
+    comando_ventana.geometry("+1500+100")
+
+    canvas = tk.Canvas(comando_ventana, width=250, height=50, highlightthickness=0, bg="red")
+    canvas.pack()
+
+    canvas.create_text(125, 25, text="Desactivar:\nCtrl+Alt+2", font=("Arial", 12))
+
+    def close_app1(event=None):
+
+        global comando_ventana
+        if comando_ventana:
+            comando_ventana.destroy()
+            comando_ventana=None
+
+
+    canvas.bind("<Button-1>", close_app1)
+
+def cerrar_comando():
+    if comando_ventana:
+        comando_ventana.after(0, comando_ventana.destroy)
+        globals()['comando_ventana'] = None
 
 def correr_eyetracker():
     global datos_eyetracker_x
@@ -114,10 +150,13 @@ def correr_eyetracker():
                 QtCore.Qt.QueuedConnection,
                 QtCore.Q_ARG(float, data[0]),
                 QtCore.Q_ARG(float, data[1])
-            )    
+            )
 
+            
 
-        if (data[0] == -1 or data[0]<20 or data[0]>1900) and flag != 1:
+        root.after(0, mostrar_comando)
+
+        if ( data[0]<20 or data[0]>1900) and flag != 1:
             root.after(0, hacer_alerta)
             flag=1
 
@@ -127,6 +166,7 @@ def correr_eyetracker():
 
 
         if not running:
+            root.after(0,cerrar_comando)
             break
 
 ##############################################################
@@ -146,6 +186,7 @@ def activar_eyetracker(event=None):
         thread.start()
     else:
         running = False
+        root.after(0,cerrar_comando)
         start_button.config(text="Start", bg="green")
 
         tiempo_transcurrido = time.time() - timer_inicio if timer_inicio else 0
@@ -162,6 +203,7 @@ def activar_eyetracker(event=None):
         tiempo_total_texto.config(text=f"Tiempo total de lectura =  {m}:{s}")
 
         stop_qt_overlay()
+        root.after(0,cerrar_comando)
 
 def listen_hotkey():
     keyboard.add_hotkey('ctrl+alt+2', lambda: root.after(0, activar_eyetracker))
